@@ -1,0 +1,87 @@
+version: 2
+vlans:
+  100:
+    max_hosts: 10
+    name: clock
+    
+acls:
+#####################
+  allowall:
+  - rule:
+      actions:
+        allow: 1
+#####################
+  wifi_limit:  
+#allow all traffic for my mobile
+  - rule:
+      semantic: 
+        from_mac: 34:8a:7B:72:8D:BC
+        to_mac:   00:00:00:00:00:00
+        from_ip: 0.0.0.0
+        to_ip: 0.0.0.0
+        proto: all
+        proto_no: 0
+   
+      actions:
+        allow: 1
+      dl_src: 34:8a:7B:72:8D:BC
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 34:8a:7B:72:8D:BC    
+#allow all traffic for PI2      
+  - rule:
+      actions:
+        allow: 1
+      dl_src: b8:27:eb:d3:f8:8c
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: b8:27:eb:d3:f8:8c   
+#allow all traffic for my laptop     
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 60:6c:66:0f:48:f3
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 60:6c:66:0f:48:f3   
+  - rule:
+      actions:
+        allow: 0
+
+dps:
+  OpenWrt:
+    dp_id: 0xEC086B5AD11E
+    hardware: Open vSwitch
+    interfaces:
+      1:
+        acl_in: wifi_limit
+        description: 'Wifi clients{name: refrigerator, description: This is a smart,
+          network enabled refrigerator, model: x24.32.1}'
+        flood_back: true
+        name: wlan0
+        native_vlan: 100
+      2:
+        acl_in: allowall
+        description: DHCP/GW server
+        name: eth14lan2
+        native_vlan: 100
+      3:
+        acl_in: allowall
+        description: Ethernet client PC
+        name: eth15lan3
+        native_vlan: 100
+      4:
+        acl_in: allowall
+        description: Ethernet client PC
+        name: eth16lan4
+        native_vlan: 100
+      5:
+        acl_in: allowall
+        description: eth0
+        name: eth0
+        native_vlan: 100
+
+             

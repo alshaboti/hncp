@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title> Home network control panel</title>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+</style>
+</head>
+
+<body>
+
+<h2> Joined devices </h2>
+<table style="width:80%">
+  <tr>
+    <th>Device Name</th>
+    <th>IP</th> 
+    <th>MAC</th>
+    <th>Description</th>
+  </tr>
+{% for row in joined_dev %}
+    <tr>
+      <td>{{ row['name'] }}</td>
+      <td>{{ row['ip'] }}</td>
+      <td>{{ row['mac'] }}</td>
+      <td>{{ row['desc'] }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+<br/>
+<br/>
+
+<h2> Blocked devices </h2>
+<table style="width:80%">
+  <tr>
+    <th>MAC</th>
+    <th>Description</th>
+    <th> Decision </th>
+  </tr>
+{% for row in blocked_dev %}
+    <tr>
+      <td>{{ row['mac'] }}</td>
+      <td>{{ row['desc'] }}</td>
+      <td>
+         <form action="/join", method="post">
+  			<input type="radio" name="decision" value="deny" checked > Deny
+  			<input type="radio" name="decision" value="allow" > Allow
+  			<input type="hidden" name="mac" value="{{ row['mac'] }}">
+			 <input type="submit" value="Apply">
+		</form>
+	 </td>        
+    </tr>
+{% endfor %}
+</table>
+
+<br>
+<br>
+
+<h2> Network Policy </h2>
+<table style="width:80%">
+  <tr>
+    <th>From</th>
+    <th>To</th> 
+    <th>Allowed services </th>
+  </tr>
+{% for net_row in net_policy %}
+    <tr>
+      <td>{{ net_row['from'] }}</td>
+      <td>{{ net_row['to'] }}</td>
+      <td> 
+		<form action="/network_policy", method="POST">
+         {% for row in net_row['services'] %}         	
+		  <input type="checkbox" name="{{ row['service_name'] }}" value="{{ row['service_name'] }}" {{ row['decision'] }}> 
+		  {{ row['service_name'] }}
+		  <input type="hidden" name="from" value="{{ net_row['from'] }}" >
+		  <input type="hidden" name="to" value="{{ net_row['to'] }}">
+		{% endfor %}		 
+		  <input type="submit" value="Apply">
+		</form>        
+
+      </td>
+    </tr>
+{% endfor %}
+</table>
+
+
+
+
+</body>
+</html>
+
+

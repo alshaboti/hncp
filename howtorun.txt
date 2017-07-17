@@ -1,0 +1,7 @@
+
+
+cd flaskenv/
+
+#then
+FLASK_APP=flaskapp.py
+flask run --host=0.0.0.0
