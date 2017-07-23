@@ -47,10 +47,8 @@ table, th, td {
       <td>{{ row['desc'] }}</td>
       <td>
          <form action="/join", method="post">
-  			<input type="radio" name="decision" value="deny" checked > Deny
-  			<input type="radio" name="decision" value="allow" > Allow
   			<input type="hidden" name="mac" value="{{ row['mac'] }}">
-			 <input type="submit" value="Apply">
+			 <input type="submit" value="Allow">
 		</form>
 	 </td>        
     </tr>
@@ -63,32 +61,62 @@ table, th, td {
 <h2> Network Policy </h2>
 <table style="width:80%">
   <tr>
-    <th>From</th>
-    <th>To</th> 
-    <th>Allowed services </th>
+    <th> From </th>
+    <th> To </th> 
+    <th> Services </th>
+    <th> Edit </th>
+    <th> Description </th>
   </tr>
+
 {% for net_row in net_policy %}
     <tr>
-      <td>{{ net_row['from'] }}</td>
-      <td>{{ net_row['to'] }}</td>
+      <td>
+        {% if net_row['from_mac']  == 'Any' and net_row['from_ip'] == 'Any' %} 
+           <b> Any </b>
+        {% else %}
+           {% if net_row['from_mac'] != 'Any' %}       <b>MAC:</b> {{ net_row['from_mac'] }}   {% endif %}
+           {% if net_row['from_ip'] != 'Any' %}   <br> <b>IP:</b>  {{ net_row['from_ip'] }}    {% endif %}
+           {% if net_row['from_host'] is not  none %} <br> <b>Host: {{ net_row['from_host'] }} </b> {% endif %}
+        {% endif %}
+      </td>
+      <td>
+        {% if net_row['to_mac']  == 'Any' and net_row['to_ip'] == 'Any' %}
+           <b> Any </b>
+        {% else %}
+           {% if net_row['to_mac'] != 'Any' %}       <b>MAC:</b> {{ net_row['to_mac'] }}   {% endif %}
+           {% if net_row['to_ip'] != 'Any' %}   <br> <b>IP:</b>  {{ net_row['to_ip'] }}    {% endif %}
+           {% if net_row['to_host'] is not  none %} <br> <b>Host: {{ net_row['to_host'] }} </b> {% endif %}
+        {% endif %}
+      </td>
+      <form action="/delete_policy", method="POST">
       <td> 
-		<form action="/network_policy", method="POST">
-         {% for row in net_row['services'] %}         	
-		  <input type="checkbox" name="{{ row['service_name'] }}" value="{{ row['service_name'] }}" {{ row['decision'] }}> 
-		  {{ row['service_name'] }}
-		  <input type="hidden" name="from" value="{{ net_row['from'] }}" >
-		  <input type="hidden" name="to" value="{{ net_row['to'] }}">
-		{% endfor %}		 
-		  <input type="submit" value="Apply">
-		</form>        
-
+	  <input type="checkbox" name="{{ net_row['service']['service_name'] }}" value="{{ net_row['service']['service_name'] }}" {{ net_row['service']['decision'] }}> 
+  	  {{ net_row['service']['service_name'] }}
+       </td>
+       <td>
+	  <input type="hidden" name="group_id" value="{{ net_row['group_id'] }}" >
+          <input type="submit" value="Delete">
+      </td>
+      </form>        
+      <td>
+      {{ net_row['semantic'] }}
       </td>
     </tr>
+
 {% endfor %}
 </table>
 
+<br>
+<form action="/new_policy">
+ <input type="submit" value="New policy">
+</form>
 
-
+<br>
+<form action="/reset">
+  <input type="submit" value="Reset" >
+</form>
+<br>
+<br>
 
 </body>
 </html>

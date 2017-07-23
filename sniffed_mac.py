@@ -11,7 +11,7 @@ def main():
         dst, src, proto, data = eth_frame(raw_data)
 
         #ignor other packets that are not from mirror interface
-        ignored_mac=["00:50:b6:18:ec:b6","98:90:96:a2:11:cc","00:1b:21:d3:1f:62"]
+        ignored_mac=["00:50:b6:18:ec:b6","98:90:96:a2:11:cc","00:1b:21:d3:1f:62", "00:00:00:00:00:00","b8:27:eb:e6:70:f1"]
         if src in ignored_mac:
             continue
 
