@@ -201,7 +201,7 @@ dps:
     hardware: Open vSwitch
     interfaces:
       1:
-        acl_in: allowall
+        acl_in: wifi_acl
         description: 'Wifi clients{name: refrigerator, description: This is a smart,
           network enabled refrigerator, model: x24.32.1}'
         hairpin: true
