@@ -1,0 +1,234 @@
+acls:
+  allowall:
+  - rule:
+      actions:
+        allow: 1
+  mirror_port:
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x0806'
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_type: '0x0806'
+      
+  - rule:
+      actions:
+        output:
+          port: 2
+      dl_dst: ff:ff:ff:ff:ff:ff
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x800'
+      
+      nw_dst: 255.255.255.255
+      nw_proto: 17
+      nw_src: 0.0.0.0
+      tp_dst: 67
+      tp_src: 68
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_type: '0x800'
+      
+      nw_proto: 17
+      nw_src: 192.168.10.254
+      tp_dst: 68
+      tp_src: 67
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x0800'
+      
+      nw_proto: 1
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_type: '0x0800'
+      
+      nw_proto: 1
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: b8:27:eb:e6:70:f1
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x800'
+      
+      nw_proto: 6
+      tp_dst: 22
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_src: b8:27:eb:e6:70:f1
+      dl_type: '0x800'
+      
+      nw_proto: 6
+      tp_src: 22
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 34:8a:7B:72:8D:BC
+      dl_src: 00:1b:21:d3:1f:62
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_src: 34:8a:7B:72:8D:BC
+      
+  - rule:
+      actions:
+        allow: 0
+      dl_src: 00:1b:21:d3:1f:62
+      
+########################
+  wifi_acl:
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 34:8a:7B:72:8D:BC
+      
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 34:8a:7B:72:8D:BC
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_src: b8:27:eb:d3:f8:8c
+      
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: b8:27:eb:d3:f8:8c
+      
+  - rule:
+      actions:
+        output:
+          port: 2
+      dl_dst: ff:ff:ff:ff:ff:ff
+      dl_src: 60:6c:66:0f:48:f3
+      dl_type: 2048
+      
+      nw_dst: 255.255.255.255
+      nw_proto: 17
+      nw_src: 0.0.0.0
+      
+      tp_dst: 67
+      tp_src: 68
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 60:6c:66:0f:48:f3
+      dl_type: 2048
+      
+      nw_proto: 17
+      nw_src: 192.168.10.254
+      tp_dst: 68
+      tp_src: 67
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 60:6c:66:0f:48:f3
+      dl_type: 2048
+      
+      nw_proto: 17
+      
+      tp_dst: 53
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 60:6c:66:0f:48:f3
+      dl_type: 2048
+      
+      nw_proto: 17
+      tp_src: 53
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 60:6c:66:0f:48:f3
+      dl_type: '0x0806'
+      
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 60:6c:66:0f:48:f3
+      dl_type: '0x0806'
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 60:6c:66:0f:48:f3
+      dl_type: '0x800'
+      
+      nw_dst: 216.58.196.131
+      
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 60:6c:66:0f:48:f3
+      dl_type: '0x800'
+      
+      nw_src: 216.58.196.131
+
+############################ only for test
+  - rule:
+      dl_dst: CC:CC:CC:D3:1F:62
+      
+      actions:
+        allow: 0        
+  - rule:
+      
+      actions:
+        allow: 0
+        output:
+          port: 3
+      
+dps:
+  OpenWrt:
+    dp_id: 259520905007390
+    hardware: Open vSwitch
+    interfaces:
+      1:
+        acl_in: allowall
+        description: 'Wifi clients{name: refrigerator, description: This is a smart,
+          network enabled refrigerator, model: x24.32.1}'
+        hairpin: true
+        name: Wifi
+        native_vlan: 100
+      2:
+        acl_in: allowall
+        description: eth14lan2, DHCP/GW server
+        name: piDHCPServer
+        native_vlan: 100
+      3:
+        acl_in: allowall
+        description: eth15lan3, Ethernet client PC
+        name: moh-OptiPlex-9020
+        native_vlan: 100
+      4:
+        acl_in: allowall
+        description: Ethernet client PC
+        name: eth16lan4
+        native_vlan: 100
+      5:
+        acl_in: allowall
+        description: eth0
+        name: eth0
+        native_vlan: 100
+version: 2
+vlans:
+  100:
+    max_hosts: 10
+    name: clock

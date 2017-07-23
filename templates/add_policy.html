@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+<p> {{ args['parag'] }} </p>
+
+<h2> Joined devices </h2>
+<table style="width:80%">
+  <tr>
+    <th> From </th>
+    <th> To </th>
+    <th> Service </th>
+    <th> Description </th>
+  </tr>
+
+  <tr>
+    <td>
+      <form action="/add_policy">
+        <input type="submit" value="{{ args['btn_value'] }}" />
+      </form>
+    </td>
+ 
+  </tr>
+
+
+</table>
+
+
+
+</body>
+</html>

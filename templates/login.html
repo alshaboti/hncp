@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title> Home network control panel</title>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+</style>
+</head>
+
+<body>
+
+<h2> Login to home network control panel </h2>
+<table style="width:80%">
+    <form action="/login" method="post">
+    <tr>
+     <td> User Name: </td>
+     <td><input type="text" placeholder="Enter Username" name="uname" required> </td>
+    </tr>
+
+    <tr> 
+    <td> Password: </td>
+     <td> <input type="password" placeholder="Enter Password" name="pwd" required> </td>
+    </tr>
+
+     <tr> 
+      <td> </td>
+     <td>  <button type="submit">Login</button> </td>
+    </tr>
+
+    </form>
+</table>
+
+
+</body>
+</html>
