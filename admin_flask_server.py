@@ -17,6 +17,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_login import current_user
 
 
+import rule_managment as rule_mngmt 
+
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/moh/flaskenv/login.db'
@@ -82,28 +84,11 @@ def home():
     faucet_yaml = get_faucet_yaml()
     print('faucet_yaml OK')
 
+    blocked_dev_info = get_blocked_devs(joined_dev_macs)
+
     # get faucet policy
     # let's make it static at first 
-    global acls
-    max_group_id, net_policy = get_faucet_policy(faucet_yaml['acls']['wifi_acl'])
-    acls = {'wifi_acl': {'next_group_id': max_group_id +1 } }
-
-    #Src dst proto from mirror port, sniffed by unauth_hosts.py
-    with open('sniffed_macs.json','r') as fp:
-      sniffed_macs = json.load(fp)
-
-    # sniffed_macs - joined_dev = blocked_dev (i.e.new devices)
-    blocked_macs = []
-    for mac in sniffed_macs.keys():
-       notfound=True
-       for dev in joined_dev_macs:
-          if mac == dev:
-             notfound=False
-             break
-       if notfound:
-           blocked_macs.append(mac) 
-
-    blocked_dev_info = get_dev_info( blocked_macs )
+    net_policy = get_faucet_policy(faucet_yaml['acls']['wifi_acl'])
 
     return render_template('index.html', joined_dev=joined_dev_info, 
     	blocked_dev=blocked_dev_info, net_policy= net_policy )
@@ -112,7 +97,7 @@ def home():
 @app.route('/join', methods=['post'])
 @login_required
 def join():
-    add_join_rules(request)
+    rule_mngmt.add_join_rules(request.form['mac'], faucet_yaml['acls']['wifi_acl'])
 
     set_faucet_yaml()
 
@@ -219,54 +204,83 @@ def set_faucet_yaml():
     os.system("scp faucet.yaml moh@192.168.5.8:/home/moh/etc/ryu/faucet/faucet.yaml")
     os.system("ssh root@192.168.5.8 pkill -HUP -f faucet.faucet")
 
+
+def get_blocked_devs(joined_dev_macs):
+    #Src dst proto from mirror port, sniffed by sniffed_macs.py
+    with open('sniffed_macs.json','r') as fp:
+      sniffed_macs = json.load(fp)
+
+    # sniffed_macs - joined_dev = blocked_dev (i.e.new devices)
+    blocked_macs = []
+    for mac in sniffed_macs.keys():
+       notfound=True
+       for dev in joined_dev_macs:
+          if mac == dev:
+             notfound=False
+             break
+       if notfound:
+           blocked_macs.append(mac)
+
+    return get_dev_info( blocked_macs )
+
+
+def check_rev_rule(srcs, dsts, protos, rule):
+    # check if rule is rev of an existing one
+    for idx in range(0, len(srcs['dl_src'])):
+      if srcs['dl_src'][idx] == rule['dl_dst'] and \
+         dsts['dl_dst'][idx] == rule['dl_src'] and \
+         protos['dl_type'][idx] == rule['dl_type'] and \
+         protos['nw_proto'][idx] == rule['nw_proto'] and \
+         srcs['tp_src'][idx] == rule['tp_dst'] and \
+         dsts['tp_dst'][idx] == rule['tp_src']:
+         return True, idx
+    return False, -1
+
+
 def get_faucet_policy(acl_list):
 
    policy = []
-   max_group_id = -1
-   for rule_dict in acl_list:
-       rule = update_acl_rule(rule_dict['rule'])
+   srcs = {'dl_src':[], 'nw_src':[], 'tp_src':[]}
+   dsts = {'dl_dst':[],'nw_dst':[], 'tp_dst':[]}
+   protos = {'dl_type':[], 'nw_proto':[]}
+   idxs = []
+   for idx in range(0, len(acl_list)):
+       
+       rule = update_acl_rule(acl_list[idx]['rule'])        
+       #is_dhcp = rule_mngmt.is_dhcp_rule(rule)
 
-   # if rule semantic attribute is not set, then it is reverse rule (IGNORE)
-       if not rule['semantic']:
-         continue
+              
+       is_reverse, r_id = check_rev_rule(srcs,dsts,protos, rule)      
+       r_id = r_id if r_id == -1 else idxs[r_id]
+       
+       srcs['dl_src'].append(rule['dl_src'])
+       dsts['dl_dst'].append(rule['dl_dst'])
+       srcs['tp_src'].append(rule['tp_src']) 
+       dsts['tp_dst'].append(rule['tp_dst'])
+       protos['dl_type'].append(rule['dl_type'])
+       protos['nw_proto'].append(rule['nw_proto'])
+       idxs.append(idx)
 
        from_host = get_dev_info(rule['dl_src'])['name']
        to_host = get_dev_info(rule['dl_dst'])['name']
 
-       max_group_id = rule['group_id'] if rule['group_id'] > max_group_id else max_group_id
-
+       service = {'service_name': rule_mngmt.get_rule_service_name(rule), 
+                  'actions': rule['actions']['allow']}
        new_policy = {'from_mac': rule['dl_src'],
                      'from_host': from_host,
                      'to_mac': rule['dl_dst'],
                      'to_host': to_host,
                      'from_ip': rule ['nw_src'],
                      'to_ip': rule['nw_dst'],
-                     'service': get_service(rule),
-                     'semantic': rule['semantic'],
-                     'group_id': rule['group_id']
+                     'service': service, 
+                     'idx': idx,
+                     'is_rev': is_reverse, 
+                     'org_rule_idx': r_id
                     }
        policy.append(new_policy)
-   return max_group_id, policy
+   return policy
 
-def get_service(rule):
-  service ={}
-  if rule['tp_src'] != 'Any':
-     service['service_name'] = proto_trans['tp_proto'][rule['tp_src']] 
-  elif rule['tp_dst'] != 'Any':
-     service['service_name'] = proto_trans['tp_proto'][rule['tp_dst']] 
-  elif rule['nw_proto'] != 'Any':
-     service['service_name'] = proto_trans['nw_proto'][rule['nw_proto']] 
-  elif rule['tp_dst'] != 'Any':
-    service['service_name'] = proto_trans['tp_proto'][rule['tp_dst']] 
-  elif rule['dl_type'] != 'Any':
-    dl_type = int(rule['dl_type'],16)
-    service['service_name'] = proto_trans['dl_type'][dl_type] 
-  else:
-     service['service_name']='Any'
 
-  service['decision']= 'checked' if rule['actions']['allow'] else 'unchecked'
-
-  return service
 
 
 def update_acl_rule(rule):
@@ -279,9 +293,7 @@ def update_acl_rule(rule):
                d[k] = u[k]
        return d
 
-    default_rule = {'semantic': '',
-                    'group_id': -1,
-                    'actions':  {'allow': 0, 'output':{'port': None}, 'mirror':None},
+    default_rule = {'actions':  {'allow': 0, 'output':{'port': None}, 'mirror':None},
                     'dl_src': 'Any',
                     'dl_dst': 'Any',
                     'dl_type': 'Any',
@@ -322,88 +334,5 @@ def ssh_command(host_name, port, user_name, password, command):
    out = ssh_client.connect(host_name,port, user_name, password)
    stdin, stdout, stderr = ssh_client.exec_command(command)
    return [stdout, stdin, stderr]
-
-
-def add_join_rules(request):
-    arp_rule ={'rule': {
-                  'group_id':acls['wifi_acl']['next_group_id'] ,
-                  'semantic': 'Allow to use ARP',
-                  'actions':{ 'allow': 1},
-                  'dl_src': request.form['mac'],
-                   'dl_type': '0x0806'
-                }
-              }
-    #insert the rule before the last rule (which is drop all)
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 , arp_rule)
-
-    rev_arp_rule ={'rule': {
-                  'group_id':acls['wifi_acl']['next_group_id'] ,
-                  'actions':{ 'allow': 1},
-                  'dl_dst': request.form['mac'],
-                   'dl_type': '0x0806'
-                } 
-              }
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 ,rev_arp_rule)
-    acls['wifi_acl']['next_group_id'] += 1
-
-
-    dhcp_rule = {'rule':{'group_id': acls['wifi_acl']['next_group_id'], 
-               'semantic': 'Allow DHCP service',
-               'dl_dst': 'ff:ff:ff:ff:ff:ff',
-               'dl_src': request.form['mac'],
-               'dl_type': '0x800',
-               'nw_proto': 17,
-               'nw_src': '0.0.0.0',
-               'nw_dst': '255.255.255.255',
-               'tp_src': 68,
-               'tp_dst': 67,
-               'actions':{'output':{'port': 2 }}
-                       }
-               }
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 , dhcp_rule)
-
-    rev_dhcp_rule = {'rule':{'group_id': acls['wifi_acl']['next_group_id'], 
-               'dl_dst': request.form['mac'],
-               'dl_type': '0x800',
-               'nw_proto': 17,
-               'nw_src': '192.168.10.254',
-               'tp_src': 67,
-               'tp_dst': 68,
-               'actions':{'allow': 1}
-                       }
-               }
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 , rev_dhcp_rule)
-    acls['wifi_acl']['next_group_id'] += 1
-
-    icmp_rule ={'rule': {
-                  'group_id':acls['wifi_acl']['next_group_id'] ,
-                  'semantic': 'Allow to use ICMP',
-                  'actions':{ 'allow': 1},
-                  'nw_proto': 1 ,
-                  'dl_src': request.form['mac'],
-                   'dl_type': '0x0800'
-                }
-              }
-    #insert the rule before the last rule (which is drop all)
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 , icmp_rule)
-
-    rev_icmp_rule ={'rule': {
-                  'group_id': acls['wifi_acl']['next_group_id'],
-                  'actions': { 'allow': 1},
-                  'nw_proto': 1,
-                  'dl_dst': request.form['mac'],
-                  'dl_type': '0x0800'
-                }
-              }
-    #insert the rule before the last rule (which is drop all)
-    acl_size = len (faucet_yaml['acls']['wifi_acl'])
-    faucet_yaml['acls']['wifi_acl'].insert( acl_size -2 , rev_icmp_rule)
-    acls['wifi_acl']['next_group_id'] += 1
-
 
 

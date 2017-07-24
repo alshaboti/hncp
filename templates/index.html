@@ -8,6 +8,12 @@ table, th, td {
     border: 1px solid black;
     border-collapse: collapse;
 }
+.allow{
+  color: green;
+}
+.deny{
+  color: red;
+}
 </style>
 </head>
 
@@ -65,7 +71,7 @@ table, th, td {
     <th> To </th> 
     <th> Services </th>
     <th> Edit </th>
-    <th> Description </th>
+    <th> Dsc</th>
   </tr>
 
 {% for net_row in net_policy %}
@@ -88,18 +94,24 @@ table, th, td {
            {% if net_row['to_host'] is not  none %} <br> <b>Host: {{ net_row['to_host'] }} </b> {% endif %}
         {% endif %}
       </td>
-      <form action="/delete_policy", method="POST">
       <td> 
-	  <input type="checkbox" name="{{ net_row['service']['service_name'] }}" value="{{ net_row['service']['service_name'] }}" {{ net_row['service']['decision'] }}> 
-  	  {{ net_row['service']['service_name'] }}
+         <p>
+        {% if net_row['service']['actions'] == 1 %}
+          <span class="allow"> Allow </span>
+        {% else %}
+          <span class = "deny"> Deny </span>
+        {% endif %}
+	      {{ net_row['service']['service_name'] }}   	  
+        </p>
        </td>
        <td>
-	  <input type="hidden" name="group_id" value="{{ net_row['group_id'] }}" >
+       <form action="/delete_policy", method="POST">
+	        <input type="hidden" name="group_id" value="0" >
           <input type="submit" value="Delete">
-      </td>
-      </form>        
+       </form>        
+      </td> 
       <td>
-      {{ net_row['semantic'] }}
+       {{ net_row['idx']}} {{ net_row['is_rev']}} {{ net_row['org_rule_idx']}}
       </td>
     </tr>
 
