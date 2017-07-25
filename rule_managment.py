@@ -1,4 +1,28 @@
 from protocol_translation import proto_trans
+import collections
+
+default_rule = {'actions':  {'allow': 0, 'output':{'port': None}, 'mirror':None},
+              'dl_src': 'Any',
+              'dl_dst': 'Any',
+              'dl_type': 'Any',
+              'nw_src': 'Any',
+              'nw_dst': 'Any',
+              'nw_proto': 'Any',
+              'tp_src': 'Any',
+              'tp_dst': 'Any'}
+
+def update_rule(rule):
+    def update(d, u):
+       for k, v in u.items():
+           if isinstance(v, collections.Mapping):
+               r = update(d.get(k, {}), v)
+               d[k] = r
+           else:
+               d[k] = u[k]
+       return d
+    def_rule = default_rule.copy()              
+    update(def_rule,rule)
+    return def_rule
 
 def get_rule_service_name(rule):
 
@@ -37,8 +61,8 @@ def get_arp_rule(mac, allow=1):
 
 # using dl_type
 def is_arp_rule(rule):
-    if 'dl_type' in list(rule['rule'].keys()) and \
-       int(rule['rule']['dl_type'], 16) == int('0x0806',16):
+    if rule['dl_type'] !=  default_rule['dl_type'] and \
+       int(rule['dl_type'], 16) == int('0x0806',16):
          return True
     return False
 
@@ -70,15 +94,21 @@ def get_dhcp_rule(mac, allow=1):
 
 # using dl_type,nw_proto, tp_src, tp_dst
 def is_dhcp_rule(rule):
-    keys = list(rule['rule'].keys())
-    if 'dl_type' in keys and int(rule['rule']['dl_type'], 16) == \
-       int('0x0800',16) and 'nw_proto' in keys and int(rule['rule']['nw_proto']) == 17:
-       if 'tp_src' in keys and 'tp_dst' in keys:
-         if int(rule['rule']['tp_src']) == 67 and int(rule['rule']['tp_dst']) in 68 :
-           return 1
-         elif int(rule['rule']['tp_src']) == 67 and int(rule['rule']['tp_dst']) in 68 :
-           return 2
-    return 0
+ 
+    if rule['dl_type'] !=  default_rule['dl_type'] and \
+       int(rule['dl_type'], 16) == int('0x0800',16) \
+       and rule['nw_proto'] !=  default_rule['nw_proto'] \
+       and int(rule['nw_proto']) == 17:
+
+       if rule['tp_src'] !=  default_rule['tp_src'] and \
+          rule['tp_dst'] !=  default_rule['tp_dst'] :
+
+         if rule['tp_src'] == 67 and rule['tp_dst'] == 68 :
+           return True, False
+         elif rule['tp_src'] == 68 and rule['tp_dst'] == 67 :
+           return True, True
+           
+    return False, False
 
 
 def get_icmp_rule(mac, allow=1):
@@ -101,9 +131,11 @@ def get_icmp_rule(mac, allow=1):
 
 # using dl_type,nw_proto, tp_src, tp_dst
 def is_icmp_rule(rule):
-    keys = list(rule['rule'].keys())
-    if 'dl_type' in keys and int(rule['rule']['dl_type'], 16) == \
-       int('0x0800',16) and 'nw_proto' in keys and int(rule['rule']['nw_proto']) == 1:
+    
+    if rule['dl_type'] !=  default_rule['dl_type'] and \
+       int(rule['dl_type'], 16) == int('0x0800',16) and \
+       rule['nw_proto'] !=  default_rule['nw_proto'] and \
+       rule['nw_proto'] == 1:
          return True
     return False
 

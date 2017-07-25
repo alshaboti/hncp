@@ -6,7 +6,6 @@ import json
 import paramiko
 from yaml import load, dump, YAMLError
 from  protocol_translation import proto_trans
-import collections
 import os
 import re
 
@@ -18,6 +17,9 @@ from flask_login import current_user
 
 
 import rule_managment as rule_mngmt 
+from rule_managment import default_rule
+
+
 
 app = Flask(__name__)
 
@@ -107,7 +109,7 @@ def join():
 @app.route('/delete_policy', methods=['POST'])
 @login_required
 def network_policy():
-    delete_faucet_rule( int(request.form['group_id']) )
+    delete_faucet_rule( int(request.form['rule_id']) )
     set_faucet_yaml()
 #   return 'Rule is deleted successfully!'
     args={"parag":"Rule is deleted successfully!","link":"http://192.168.5.3:5000/home", "btn_value":"Home"} 
@@ -132,14 +134,14 @@ def not_found(error):
     return 'Try again, error!'
 
 
-def delete_faucet_rule(group_id):
+def delete_faucet_rule(rule_id):
 
     wifi_acl_list = faucet_yaml['acls']['wifi_acl']
     copy_acl_list = []
     for i in range(0, len(wifi_acl_list) ) :
         rule = wifi_acl_list[i]['rule']
-        if rule['group_id'] == group_id:
-           continue
+        if rule['rule_id'] == rule_id:        
+           continue        
         copy_acl_list.append(wifi_acl_list[i])
 
     faucet_yaml['acls']['wifi_acl'] = copy_acl_list
@@ -198,11 +200,16 @@ def get_faucet_yaml():
 
 # write faucet yaml file and restart fuacet using ssh
 def set_faucet_yaml():
+    
+    wifi_acl_list = faucet_yaml['acls']['wifi_acl']
+    for i in range(0, len(wifi_acl_list) ) :
+        del faucet_yaml['acls']['wifi_acl'][i]['rule']['rule_id']
+
     with open("faucet.yaml", "w") as fd:
         dump(faucet_yaml, fd, default_flow_style=False)
     # it works as long as you set ssh key between the two hosts
     os.system("scp faucet.yaml moh@192.168.5.8:/home/moh/etc/ryu/faucet/faucet.yaml")
-    os.system("ssh root@192.168.5.8 pkill -HUP -f faucet.faucet")
+    os.system("ssh root@192.168.5.8 docker exec -it reannz_faucet pkill -HUP -f faucet.faucet") #pkill -HUP -f faucet.faucet")
 
 
 def get_blocked_devs(joined_dev_macs):
@@ -226,9 +233,10 @@ def get_blocked_devs(joined_dev_macs):
 
 def check_rev_rule(srcs, dsts, protos, rule):
     # check if rule is rev of an existing one
+    is_dhcp, is_rev = rule_mngmt.is_dhcp_rule(rule)
     for idx in range(0, len(srcs['dl_src'])):
       if srcs['dl_src'][idx] == rule['dl_dst'] and \
-         dsts['dl_dst'][idx] == rule['dl_src'] and \
+         ( is_dhcp or dsts['dl_dst'][idx] == rule['dl_src']) and \
          protos['dl_type'][idx] == rule['dl_type'] and \
          protos['nw_proto'][idx] == rule['nw_proto'] and \
          srcs['tp_src'][idx] == rule['tp_dst'] and \
@@ -243,23 +251,25 @@ def get_faucet_policy(acl_list):
    srcs = {'dl_src':[], 'nw_src':[], 'tp_src':[]}
    dsts = {'dl_dst':[],'nw_dst':[], 'tp_dst':[]}
    protos = {'dl_type':[], 'nw_proto':[]}
-   idxs = []
-   for idx in range(0, len(acl_list)):
+   
+   for idx in range(0, len(acl_list)):      
        
-       rule = update_acl_rule(acl_list[idx]['rule'])        
-       #is_dhcp = rule_mngmt.is_dhcp_rule(rule)
-
-              
+       rule = rule_mngmt.update_rule(acl_list[idx]['rule'])            
+ 
        is_reverse, r_id = check_rev_rule(srcs,dsts,protos, rule)      
-       r_id = r_id if r_id == -1 else idxs[r_id]
+       rule_id = idx if r_id == -1 else r_id          
        
+       acl_list[idx]['rule']['rule_id'] = rule_id
+
        srcs['dl_src'].append(rule['dl_src'])
        dsts['dl_dst'].append(rule['dl_dst'])
        srcs['tp_src'].append(rule['tp_src']) 
        dsts['tp_dst'].append(rule['tp_dst'])
        protos['dl_type'].append(rule['dl_type'])
        protos['nw_proto'].append(rule['nw_proto'])
-       idxs.append(idx)
+       
+       if is_reverse:
+          continue
 
        from_host = get_dev_info(rule['dl_src'])['name']
        to_host = get_dev_info(rule['dl_dst'])['name']
@@ -273,37 +283,11 @@ def get_faucet_policy(acl_list):
                      'from_ip': rule ['nw_src'],
                      'to_ip': rule['nw_dst'],
                      'service': service, 
-                     'idx': idx,
-                     'is_rev': is_reverse, 
-                     'org_rule_idx': r_id
+                     'idx': rule_id,
+                     'is_rev': is_reverse 
                     }
        policy.append(new_policy)
    return policy
-
-
-
-
-def update_acl_rule(rule):
-    def update(d, u):
-       for k, v in u.items():
-           if isinstance(v, collections.Mapping):
-               r = update(d.get(k, {}), v)
-               d[k] = r
-           else:
-               d[k] = u[k]
-       return d
-
-    default_rule = {'actions':  {'allow': 0, 'output':{'port': None}, 'mirror':None},
-                    'dl_src': 'Any',
-                    'dl_dst': 'Any',
-                    'dl_type': 'Any',
-                    'nw_src': 'Any',
-                    'nw_dst': 'Any',
-                    'nw_proto': 'Any',
-                    'tp_src': 'Any',
-                    'tp_dst': 'Any'}
-    update(default_rule,rule)
-    return default_rule
 
 
 def get_dhcp_leases():

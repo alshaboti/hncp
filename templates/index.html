@@ -106,12 +106,12 @@ table, th, td {
        </td>
        <td>
        <form action="/delete_policy", method="POST">
-	        <input type="hidden" name="group_id" value="0" >
+	        <input type="hidden" name="rule_id" value="{{ net_row['idx']}}" >
           <input type="submit" value="Delete">
        </form>        
       </td> 
       <td>
-       {{ net_row['idx']}} {{ net_row['is_rev']}} {{ net_row['org_rule_idx']}}
+       {{ net_row['idx']}} {{ net_row['is_rev']}} 
       </td>
     </tr>
 
