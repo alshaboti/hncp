@@ -3,28 +3,12 @@ acls:
   - rule:
       actions:
         allow: 1
-  wifi_acl:
-  - rule:
-      actions:
-        allow: 1
-      dl_src: 34:8a:7B:72:8D:BC
-  - rule:
-      actions:
-        allow: 1
-      dl_dst: 34:8a:7B:72:8D:BC
-  - rule:
-      actions:
-        allow: 1
-      dl_src: b8:27:eb:d3:f8:8c
-  - rule:
-      actions:
-        allow: 1
-      dl_dst: b8:27:eb:d3:f8:8c
+  port3_acl:
   - rule:
       actions:
         allow: 1
       dl_dst: ff:ff:ff:ff:ff:ff
-      dl_src: 60:6c:66:0f:48:f3
+      dl_src: 00:1b:21:d3:1f:62
       dl_type: '0x800'
       nw_dst: 255.255.255.255
       nw_proto: 17
@@ -34,58 +18,72 @@ acls:
   - rule:
       actions:
         allow: 1
-      dl_dst: 60:6c:66:0f:48:f3
-      dl_type: '0x800'
-      nw_proto: 17
-      nw_src: 192.168.10.254
-      tp_dst: 68
-      tp_src: 67
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x0806'
   - rule:
       actions:
         allow: 1
-      dl_src: 60:6c:66:0f:48:f3
+      dl_dst: B8:27:EB:E6:70:F1
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x0800'
+      nw_proto: 1
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: b8:27:eb:e6:70:f1
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x800'
+      nw_proto: 6
+      tp_dst: 22
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1B:21:D3:1F:62
+      dl_src: 28:BA:B5:DE:64:E7
+      dl_type: '0x800'
+      nw_proto: 17
+      tp_dst: 5000
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 34:8A:7B:72:8D:BC
+      dl_src: 00:1b:21:d3:1f:62
+      dl_type: '0x0800'
+      nw_proto: 6
+      tp_src: 5000
+  - rule:
+      actions:
+        allow: 0
+  wifi_acl:
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: ff:ff:ff:ff:ff:ff
+      dl_src: B8:27:EB:D3:F8:8C
+      dl_type: '0x800'
+      nw_dst: 255.255.255.255
+      nw_proto: 17
+      nw_src: 0.0.0.0
+      tp_dst: 67
+      tp_src: 68
+  - rule:
+      actions:
+        allow: 1
+      dl_src: B8:27:EB:D3:F8:8C
       dl_type: '0x800'
       nw_proto: 17
       tp_dst: 53
   - rule:
       actions:
         allow: 1
-      dl_dst: 60:6c:66:0f:48:f3
-      dl_type: '0x800'
-      nw_proto: 17
-      tp_src: 53
-  - rule:
-      actions:
-        allow: 1
-      dl_src: 60:6c:66:0f:48:f3
+      dl_src: B8:27:EB:D3:F8:8C
       dl_type: '0x0806'
   - rule:
       actions:
         allow: 1
-      dl_dst: 60:6c:66:0f:48:f3
-      dl_type: '0x0806'
-  - rule:
-      actions:
-        allow: 1
-      dl_src: 60:6c:66:0f:48:f3
-      dl_type: '0x800'
-      nw_dst: 216.58.196.131
-  - rule:
-      actions:
-        allow: 1
-      dl_dst: 60:6c:66:0f:48:f3
-      dl_type: '0x800'
-      nw_src: 216.58.196.131
-  - rule:
-      actions:
-        allow: 1
-      dl_src: 34:8A:7B:72:8D:BC
-      dl_type: '0x0806'
-  - rule:
-      actions:
-        allow: 1
-      dl_dst: 34:8A:7B:72:8D:BC
-      dl_type: '0x0806'
+      dl_src: B8:27:EB:D3:F8:8C
+      dl_type: '0x0800'
+      nw_proto: 1
   - rule:
       actions:
         allow: 1
@@ -100,12 +98,20 @@ acls:
   - rule:
       actions:
         allow: 1
-      dl_dst: 34:8A:7B:72:8D:BC
+      dl_src: 34:8A:7B:72:8D:BC
       dl_type: '0x800'
       nw_proto: 17
-      nw_src: 192.168.10.254
-      tp_dst: 68
-      tp_src: 67
+      tp_dst: 53
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 34:8A:7B:72:8D:BC
+      dl_type: '0x0806'
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 34:8A:7B:72:8D:BC
+      dl_type: '0x0806'
   - rule:
       actions:
         allow: 1
@@ -115,8 +121,40 @@ acls:
   - rule:
       actions:
         allow: 1
+      dl_dst: 34:8A:7B:72:8D:BC
+      dl_type: '0x0800'
+      nw_proto: 1
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: B8:27:EB:E6:70:F1
+      dl_src: 34:8A:7B:72:8D:BC
+      dl_type: '0x0800'
+      nw_proto: 6
+      tp_dst: 443
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 00:1b:21:d3:1f:62
+      dl_src: 34:8A:7B:72:8D:BC
+      dl_type: '0x0800'
+      nw_proto: 6
+      tp_dst: 5000
+  - rule:
+      actions:
+        allow: 1
+      dl_src: 28:BA:B5:DE:64:E7
+      dl_type: '0x0806'
+  - rule:
+      actions:
+        allow: 1
+      dl_dst: 28:BA:B5:DE:64:E7
+      dl_type: '0x0806'
+  - rule:
+      actions:
+        allow: 1
       dl_dst: ff:ff:ff:ff:ff:ff
-      dl_src: B8:27:EB:D3:F8:8C
+      dl_src: 28:BA:B5:DE:64:E7
       dl_type: '0x800'
       nw_dst: 255.255.255.255
       nw_proto: 17
@@ -126,7 +164,7 @@ acls:
   - rule:
       actions:
         allow: 1
-      dl_dst: B8:27:EB:D3:F8:8C
+      dl_dst: 28:BA:B5:DE:64:E7
       dl_type: '0x800'
       nw_proto: 17
       nw_src: 192.168.10.254
@@ -135,24 +173,29 @@ acls:
   - rule:
       actions:
         allow: 1
-      dl_src: B8:27:EB:D3:F8:8C
+      dl_src: 28:BA:B5:DE:64:E7
       dl_type: '0x0800'
       nw_proto: 1
   - rule:
       actions:
         allow: 1
-      dl_dst: B8:27:EB:D3:F8:8C
+      dl_dst: 28:BA:B5:DE:64:E7
       dl_type: '0x0800'
       nw_proto: 1
   - rule:
       actions:
         allow: 1
-      dl_dst: 34:8A:7B:72:8D:BC
-      dl_type: '0x0800'
-      nw_proto: 1
+      dl_dst: 28:BA:B5:DE:64:E7
+      dl_src: 00:1B:21:D3:1F:62
+      dl_type: '0x800'
+      nw_proto: 17
+      tp_src: 5000
   - rule:
       actions:
         allow: 0
+      dl_src: 00:00:cc:cc:cc:cc
+  - rule:
+      actions:
         output:
           port: 3
 dps:
@@ -173,7 +216,7 @@ dps:
         name: piDHCPServer
         native_vlan: 100
       3:
-        acl_in: allowall
+        acl_in: port3_acl
         description: eth15lan3, Ethernet client PC
         name: moh-OptiPlex-9020
         native_vlan: 100

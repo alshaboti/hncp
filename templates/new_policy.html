@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p> Add new network policy for your joined devices:</p>
+
+<table style="width:80%">
+  <tr>
+    <th>From</th>
+    <th>To</th> 
+    <th>Service</th>
+    <th> </th>
+  </tr>
+
+<tr>
+<form action="/add_policy" method="post">
+
+  <td>
+  <input list="from_entity" name="from_entity">
+  <datalist id="from_entity">
+{% for row in args['local_devs_list'] %}  
+    <option value="{{ row['mac'] }}"> {{ row['name'] }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+
+  <td>
+  <input list="to_entity" name="to_entity">
+  <datalist id="to_entity" >
+{% for row in args['local_devs_list'] %}  
+    <option value="{{ row['mac'] }}"> {{ row['name'] }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+
+  <td>
+  <input list="service" name="service">
+  <datalist id="service">
+{% for service_no, service_name in args['services_dict'].items() %}  
+    <option value="{{ service_no }}"> {{ service_name }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+  <td>
+<input type="submit" value="Submit"> <br>
+<input type="reset">
+</td>
+</form> 
+ 
+</tr>
+
+</table>
+
+
+</body>
+</html>

@@ -6,7 +6,7 @@ import json
 import paramiko
 from yaml import load, dump, YAMLError
 from  protocol_translation import proto_trans
-import os
+import os, sys
 import re
 
 
@@ -23,6 +23,8 @@ from rule_managment import default_rule
 
 app = Flask(__name__)
 
+servers = {'http_server':'00:1b:21:d3:1f:62','gW_Server': 'b8:27:eb:e6:70:f1'}
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/moh/flaskenv/login.db'
 app.config['SECRET_KEY'] = 'sdn.wifi'
 
@@ -31,6 +33,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -72,19 +76,24 @@ def home():
     global dev_info
     dev_info = get_dhcp_leases()
     print('dev_info OK')
+    sys.stdout.flush()
 
     # request learned mac from faucet promethous 192.168.5.8:9244
     joined_dev_macs = get_faucet_macs()
     print('joined_dev_macs OK')
+    sys.stdout.flush()
 
     #  add dev IP and hostname
+    global joined_dev_info    
     joined_dev_info = get_dev_info(joined_dev_macs)
     print('joined_dev_info OK')
+    sys.stdout.flush()
 
     # get faucet.yaml file
     global faucet_yaml
     faucet_yaml = get_faucet_yaml()
     print('faucet_yaml OK')
+    sys.stdout.flush()
 
     blocked_dev_info = get_blocked_devs(joined_dev_macs)
 
@@ -119,8 +128,27 @@ def network_policy():
 @app.route('/new_policy', methods=['GET'])
 @login_required
 def new_policy():
-    pass
+    args = {}
+    args['local_devs_list'] = joined_dev_info
+    args['services_dict'] = proto_trans['tp_proto']
 
+    return render_template('new_policy.html', args = args)
+
+@app.route('/add_policy', methods=['POST'])
+@login_required
+def add_policy():
+  acl_to = acl_from = faucet_yaml['acls']['wifi_acl']  
+  
+  if request.form['to_entity'].lower() == servers['http_server']:
+     acl_to = faucet_yaml['acls']['port3_acl']
+
+  rule_mngmt.add_rule(request.form['from_entity'], 
+         request.form['to_entity'], int(request.form['service']), 
+         acl_from, acl_to)
+  set_faucet_yaml()
+
+  args={"parag":"Rule is added successfully!","link":"http://192.168.5.3:5000/home", "btn_value":"Home"} 
+  return render_template('done.html', args=args )
 
 @app.route('/reset', methods=['GET'])
 @login_required
@@ -203,13 +231,14 @@ def set_faucet_yaml():
     
     wifi_acl_list = faucet_yaml['acls']['wifi_acl']
     for i in range(0, len(wifi_acl_list) ) :
-        del faucet_yaml['acls']['wifi_acl'][i]['rule']['rule_id']
+        if 'rule_id' in faucet_yaml['acls']['wifi_acl'][i]['rule']:
+           del faucet_yaml['acls']['wifi_acl'][i]['rule']['rule_id']
 
     with open("faucet.yaml", "w") as fd:
         dump(faucet_yaml, fd, default_flow_style=False)
     # it works as long as you set ssh key between the two hosts
     os.system("scp faucet.yaml moh@192.168.5.8:/home/moh/etc/ryu/faucet/faucet.yaml")
-    os.system("ssh root@192.168.5.8 docker exec -it reannz_faucet pkill -HUP -f faucet.faucet") #pkill -HUP -f faucet.faucet")
+    os.system("ssh root@192.168.5.8 docker exec reannz_faucet pkill -HUP -f faucet.faucet") #pkill -HUP -f faucet.faucet")
 
 
 def get_blocked_devs(joined_dev_macs):

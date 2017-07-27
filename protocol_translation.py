@@ -1,4 +1,4 @@
-proto_trans ={
+proto_trans = {
  'dl_type': {
 	0x0800 : "ETH_TYPE_IP",
 	0x0806 : "ETH_TYPE_ARP",
@@ -30,16 +30,19 @@ proto_trans ={
 	112 : "IPPROTO_VRRP",
 	132 : "IPPROTO_SCTP"}, 
 'tp_proto':{
+    5000: "HTTP, SDN-C",
 	22: "SSH",
 	53: "DNS",
 	67: "DHCP",
 	68: "DHCP",
+	20: "FTP",
 	21: "FTP",
-	22: "FTP,",
 	80: "HTTP",
 	443: "HTTPS",
 	1883: "MQTT",
 	8883: "MQTT(SSL)",
-	5683: "CoAP"}
+	5683: "CoAP",
+	5280: "XMPP over HTTP (e.g. Whatsapp, Google Talk)",
+	5222: "XMPP (e.g. Whatsapp)"}
 }
 

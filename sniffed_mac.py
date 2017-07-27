@@ -6,6 +6,7 @@ import json
 def main():
     mac_dic = {}
     con = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
+    print('Sniffer is running...\n')
     while True:
         raw_data, add = con.recvfrom(65536)
         dst, src, proto, data = eth_frame(raw_data)
