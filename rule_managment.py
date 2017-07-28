@@ -264,6 +264,8 @@ def add_join_rules(mac, acl):
 
 
 def add_rule(from_mac, to_mac, port_no, acl_from, acl_to, allow=1):
+
+     
     rule = []
     rule.append({'rule':{
                'dl_dst': to_mac,
