@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title> Home network control panel</title>
-<style>
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-.allow{
-  color: green;
-}
-.deny{
-  color: red;
-}
-</style>
+<meta charset="utf-8">
+<title>Home network management</title>
+<link href="home_style.css" rel="stylesheet">
+<script type="text/javascript" src="home_dynamic.js"></script>
 </head>
 
-<body>
+<body onload="onload()">
 
-<h2> Joined devices </h2>
+<p>Home network management control panel:</p>
+
+<div class="tab">
+  <button class="tablinks" onclick="open_tab(event, 'joined_devices')">Joined devices</button>
+  <button class="tablinks" onclick="open_tab(event, 'blocked_devices')">Blocked devices</button>
+  <button class="tablinks" onclick="open_tab(event, 'network_policy')">Network Policy</button>
+  <button class="tablinks" onclick="open_tab(event, 'topology')">Topology</button>
+</div>
+<!-- ##############################3 -->
+<div id="joined_devices" class="tabcontent">
 <table style="width:80%">
   <tr>
     <th>Device Name</th>
@@ -36,11 +35,10 @@ table, th, td {
     </tr>
 {% endfor %}
 </table>
+</div>
 
-<br/>
-<br/>
-
-<h2> Blocked devices </h2>
+<!-- ##############################3 -->
+<div id="blocked_devices" class="tabcontent">
 <table style="width:80%">
   <tr>
     <th>MAC</th>
@@ -53,18 +51,17 @@ table, th, td {
       <td>{{ row['desc'] }}</td>
       <td>
          <form action="/join", method="post">
-  			<input type="hidden" name="mac" value="{{ row['mac'] }}">
-			 <input type="submit" value="Allow">
-		</form>
-	 </td>        
+        <input type="hidden" name="mac" value="{{ row['mac'] }}">
+       <input type="submit" value="Allow">
+    </form>
+   </td>        
     </tr>
 {% endfor %}
 </table>
+</div>
 
-<br>
-<br>
-
-<h2> Network Policy </h2>
+<!-- ##############################3 -->
+<div id="network_policy" class="tabcontent">
 <table style="width:80%">
   <tr>
     <th> From </th>
@@ -101,33 +98,81 @@ table, th, td {
         {% else %}
           <span class = "deny"> Deny </span>
         {% endif %}
-	      {{ net_row['service']['service_name'] }}   	  
+        {{ net_row['service']['service_name'] }}      
         </p>
        </td>
        <td>
        <form action="/delete_policy", method="POST">
-	        <input type="hidden" name="rule_id" value="{{ net_row['idx']}}" >
+          <input type="hidden" name="rule_id" value="{{ net_row['idx']}}" >
           <input type="submit" value="Delete">
        </form>        
       </td> 
       <td>
-       {{ net_row['idx']}} {{ net_row['is_rev']}} 
+       <!-- {{ net_row['idx']}} {{ net_row['is_rev']}}  -->
+       None
       </td>
     </tr>
 
 {% endfor %}
 </table>
-
-<br>
-<input type="button" onclick="window.location.href='/new_policy'" value="New policy">
-<br>
-<input type="button" onclick="window.location.href='/show_topo'" value="Network Topology">
 <br>
 <form action="/reset">
   <input type="submit" value="Reset" >
 </form>
-<br>
-<br>
+
+<div id="edit_policy" >
+<h2> Add new policy: </h2>
+<table style="width:80%">
+  <tr>
+    <th>From</th>
+    <th>To</th> 
+    <th>Service</th>
+    <th> </th>
+  </tr>
+<tr>
+<form action="/add_policy" method="post">
+  <td>
+  <input list="from_entity" name="from_entity">
+  <datalist id="from_entity">
+{% for row in joined_dev %}  
+    <option value="{{ row['mac'] }}"> {{ row['name'] }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+
+  <td>
+  <input list="to_entity" name="to_entity">
+  <datalist id="to_entity" >
+{% for row in joined_dev %}  
+    <option value="{{ row['mac'] }}"> {{ row['name'] }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+
+  <td>
+  <input list="service" name="service">
+  <datalist id="service">
+{% for service_no, service_name in services_dict.items() %}  
+    <option value="{{ service_no }}"> {{ service_name }} </option>
+{% endfor %}  
+  </datalist> 
+  </td>
+  <td>
+<input type="submit" value="Submit"> <br>
+<input type="reset">
+</td>
+</form>  
+</tr>
+</table>
+
+</div>
+</div>
+
+<!-- ##############################3 -->
+<div id="topology" class="tabcontent">
+<input type="button" onclick="window.open('/show_topo', '_blank')" value="Network Topology"> 
+</div>
+
 
 </body>
 </html>

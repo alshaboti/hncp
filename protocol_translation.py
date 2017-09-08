@@ -30,7 +30,7 @@ proto_trans = {
 	112 : "IPPROTO_VRRP",
 	132 : "IPPROTO_SCTP"}, 
 'tp_proto':{
-    5000: "HTTP, SDN-C",
+    5000: "HTTP SDN-C",
 	22: "SSH",
 	53: "DNS",
 	67: "DHCP",

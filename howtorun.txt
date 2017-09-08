@@ -1,7 +1,7 @@
 
 
-cd flaskenv/
+cd flask_app/
 
 #then
-FLASK_APP=flaskapp.py
+export FLASK_APP=admin_flask_server.py
 flask run --host=0.0.0.0

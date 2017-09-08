@@ -3,18 +3,26 @@ import socket
 import struct
 import json
 
-def main():
+def main():    
     mac_dic = {}
+
+    with open('sniffed_macs.json', 'w') as fp:
+       json.dump(mac_dic,fp)    
+
     con = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
     print('Sniffer is running...\n')
     while True:
         raw_data, add = con.recvfrom(65536)
         dst, src, proto, data = eth_frame(raw_data)
 
+#        if src == '34:8A:7B:72:8D:BC'.lower() or dst == '34:8A:7B:72:8D:BC'.lower():
+#          print ('src: ', src, ', dst:', dst, ', proto:', proto)
+
         #ignor other packets that are not from mirror interface
         ignored_mac=["00:50:b6:18:ec:b6","98:90:96:a2:11:cc","00:1b:21:d3:1f:62", "00:00:00:00:00:00","b8:27:eb:e6:70:f1"]
         if src in ignored_mac:
             continue
+
 
         if src not in mac_dic.keys():
             mac_dic[src] = {'dst': dst, 'proto': proto}

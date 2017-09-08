@@ -101,7 +101,7 @@ def get_http_rule(mac, allow=1):
                'dl_dst': 'b8:27:eb:e6:70:f1',
                'dl_src': mac,
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto': 6,
                'tp_dst': 80,
                'actions':{'allow': allow}
                        }
@@ -110,7 +110,7 @@ def get_http_rule(mac, allow=1):
                'dl_dst': mac,
                'dl_src': 'b8:27:eb:e6:70:f1',
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto': 6,
                'nw_src': '192.168.10.254',
                'tp_src': 80,
                'actions':{'allow': allow}
@@ -124,7 +124,7 @@ def get_ssh_rule(from_mac, to_mac, allow=1):
                'dl_dst': to_mac,
                'dl_src': from_mac,
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto': 6,
                'tp_dst': 22,
                'actions':{'allow': allow}
                        }
@@ -133,7 +133,7 @@ def get_ssh_rule(from_mac, to_mac, allow=1):
                'dl_dst': from_mac,
                'dl_src': to_mac,
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto': 6,
                'tp_src': 22,
                'actions':{'allow': allow}
                        }
@@ -146,6 +146,27 @@ def is_arp_rule(rule):
        int(rule['dl_type'], 16) == int('0x0806',16):
          return True
     return False
+
+
+def get_dns_rule(mac, allow=1):
+    rule = []
+    rule.append({'rule':{
+               'dl_src': mac,
+               'dl_type': '0x800',
+               'nw_proto': 17,
+               'tp_dst': 53,
+               'actions':{'allow': allow}
+                       }
+               })
+    # rule.append({'rule':{
+    #            'dl_dst': mac,
+    #            'dl_type': '0x800',
+    #            'nw_proto': 17,
+    #            'tp_src': 53,
+    #            'actions':{'allow': allow}
+    #                    }
+    #            })
+    return rule
 
 def get_dhcp_rule(mac, allow=1):
 
@@ -162,16 +183,16 @@ def get_dhcp_rule(mac, allow=1):
                'actions':{'allow': allow}
                        }
                })
-    dhcp_rule.append({'rule':{
-               'dl_dst': mac,
-               'dl_type': '0x800',
-               'nw_proto': 17,
-               'nw_src': '192.168.10.254',
-               'tp_src': 67,
-               'tp_dst': 68,
-               'actions':{'allow': allow}
-                       }
-               })
+    # dhcp_rule.append({'rule':{
+    #            'dl_dst': mac,
+    #            'dl_type': '0x800',
+    #            'nw_proto': 17,
+    #            'nw_src': '192.168.10.254',
+    #            'tp_src': 67,
+    #            'tp_dst': 68,
+    #            'actions':{'allow': allow}
+    #                    }
+    #            })
     return dhcp_rule
 
 # using dl_type,nw_proto, tp_src, tp_dst
@@ -251,13 +272,16 @@ def insert_rules(rules, acl, offset = 2):
 
 def add_join_rules(mac, acl):
     rules = []
-    arp_rule = get_arp_rule(mac, 1)
+    arp_rule = get_arp_rule(mac)
     rules.append(arp_rule)
 
-    dhcp_rule = get_dhcp_rule(mac, 1)
+    dhcp_rule = get_dhcp_rule(mac)
     rules.append(dhcp_rule)
-    
-    icmp_rule = get_icmp_rule(mac, 1)
+
+    dns_rule = get_dns_rule(mac)
+    rules.append(dns_rule)
+
+    icmp_rule = get_icmp_rule(mac)
     rules.append(icmp_rule)
     rules = flatten(rules)
     insert_rules(rules, acl)
@@ -271,7 +295,7 @@ def add_rule(from_mac, to_mac, port_no, acl_from, acl_to, allow=1):
                'dl_dst': to_mac,
                'dl_src': from_mac,
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto':6,
                'tp_dst': port_no,
                'actions':{'allow': allow}
                        }
@@ -281,7 +305,7 @@ def add_rule(from_mac, to_mac, port_no, acl_from, acl_to, allow=1):
                'dl_dst': from_mac,
                'dl_src': to_mac,
                'dl_type': '0x800',
-               'nw_proto': 17,
+               'nw_proto': 6,
                'tp_src': port_no,
                'actions':{'allow': allow}
                        }
